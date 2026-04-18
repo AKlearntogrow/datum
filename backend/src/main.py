@@ -1,6 +1,7 @@
 """Datum backend — FastAPI application entry point."""
 
 from fastapi import Depends, FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -13,6 +14,19 @@ app = FastAPI(
     title="Datum",
     description="AI-assisted semantic layer for messy data warehouses.",
     version="0.1.0",
+)
+
+# CORS — allow the Next.js dev server to call this API from the browser.
+# In production we'll tighten this to specific allowed origins.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 
