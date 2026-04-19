@@ -20,15 +20,18 @@ app = FastAPI(
 )
 
 # CORS — allow the Next.js dev server to call this API from the browser.
+# In production we'll tighten origins and add rate limiting.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",
         "http://127.0.0.1:3000",
     ],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_credentials=False,  # We don't use cookies; setting True with wildcard methods trips some browsers.
+    allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization", "Accept"],
+    expose_headers=["*"],
+    max_age=3600,
 )
 
 # Translate internal exceptions into HTTP status codes.
