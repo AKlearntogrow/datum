@@ -146,6 +146,16 @@ Tables are created WITHOUT `COMMENT ON COLUMN` statements. This is the point: th
 - The demo is only as convincing as the realism of the mess — we'll need to iterate on Faker seed choices
 - 156 rows is small; we may need to scale up to 1,000+ to test performance later
 
+## Known limitations
+
+These are known gaps in the synthetic data that we have accepted for v0 of the demo:
+
+1. **No revenue recognition timing.** Opportunities record `amount` (total contract value) and `close_date`, but not how that revenue recognizes over the contract term. This means "Q1 actuals" measured as `SUM(amount) WHERE close_date in Q1` is not directly comparable to Q1 forecast, which represents per-month recognized revenue. The deliberate ~15% Q1 forecast overstatement is encoded in the forecast generator's multiplier, not derivable by comparing against the sales table. The LLM can still surface the pattern as "Q1 forecast appears inflated relative to Q1 pipeline activity" even without revenue-recognition math.
+
+2. **Verification queries require fuzzy matching.** Because customer names deliberately vary in spelling across tables, exact-match joins return zero results. Any query verifying cross-table consistency must use fuzzy matching (e.g., `LEFT(UPPER(REGEXP_REPLACE(name, '[^A-Za-z]', '', 'g')), 4)`) until the semantic layer provides a canonical entity resolution.
+
+3. **Bank description parsing is ad-hoc.** The invoice reference inside `bank_transactions.description` follows no strict format and isn't always present. Linking a bank transaction back to an invoice requires text parsing, not a structured join.
+
 ## Revisit when
 
 - We have a paying customer whose real data stress-tests this design
