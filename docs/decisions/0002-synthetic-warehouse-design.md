@@ -156,6 +156,8 @@ These are known gaps in the synthetic data that we have accepted for v0 of the d
 
 3. **Bank description parsing is ad-hoc.** The invoice reference inside `bank_transactions.description` follows no strict format and isn't always present. Linking a bank transaction back to an invoice requires text parsing, not a structured join.
 
+4. **LTV formula has a double-annualization bug.** The forecast generator computes `ltv_estimate = forecasted_amount × 12 / expected_churn_rate`, but `forecasted_amount` is already an annual figure for that month's revenue line. Correct ARR-based LTV would be `forecasted_amount / expected_churn_rate`, producing values ~12× smaller. We have deliberately retained this bug as realistic "accidental mess" — unverified formulas in FP&A spreadsheets are a real-world phenomenon, and surfacing this kind of quiet wrongness is part of what a semantic layer should do. The LLM should flag that LTV values are implausibly large relative to ARR.
+
 ## Revisit when
 
 - We have a paying customer whose real data stress-tests this design
