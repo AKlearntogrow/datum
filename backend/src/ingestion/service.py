@@ -46,7 +46,7 @@ prompts, large enough to surface realistic value patterns."""
 # Pattern matching is substring-based against the lowercased native type.
 _TYPE_MAPPING: tuple[tuple[tuple[str, ...], DatumType], ...] = (
     # Integers (check before numeric — "integer" could match loosely)
-    (("smallint", "integer", "bigint", "int2", "int4", "int8", "serial"), DatumType.INTEGER),
+    (("smallint", "integer", "bigint", "int2", "int4", "int8", "int64", "serial"), DatumType.INTEGER),
     # Numerics with fractional precision
     (("numeric", "decimal", "real", "double", "float", "money"), DatumType.NUMERIC),
     # Booleans
@@ -57,7 +57,7 @@ _TYPE_MAPPING: tuple[tuple[tuple[str, ...], DatumType], ...] = (
     # JSON
     (("json", "jsonb"), DatumType.JSON),
     # Strings (catch-all for textual types)
-    (("character", "varchar", "char", "text", "uuid"), DatumType.STRING),
+    (("character", "varchar", "char", "text", "string", "uuid"), DatumType.STRING),
 )
 
 
