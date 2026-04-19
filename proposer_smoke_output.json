@@ -1,0 +1,1025 @@
+{
+  "entities": [
+    {
+      "name": "customer",
+      "display_name": "Customer",
+      "description": "Business customer or account that purchases from the company.",
+      "source_columns": [
+        {
+          "table": "messy_warehouse.public.invoices",
+          "column": "customer"
+        },
+        {
+          "table": "messy_warehouse.public.sales_opportunities",
+          "column": "account_name"
+        }
+      ],
+      "rationale": "Both columns represent customer/account names with similar business entities appearing across tables, though with naming variations.",
+      "evidence": [
+        "invoices.customer samples: 'Acme Corp.', 'Wayne Ent', 'Cyberdyne Sys', 'Stark Ind.'",
+        "sales_opportunities.account_name samples: 'Tyrell Corporation', 'Soylent Group', 'Initech LLC', 'Cyberdyne Systems'",
+        "Overlapping entity 'Cyberdyne' appears as 'Cyberdyne Sys' in invoices and 'Cyberdyne Systems' in opportunities"
+      ],
+      "confidence": "high"
+    },
+    {
+      "name": "invoice",
+      "display_name": "Invoice",
+      "description": "Billing invoice issued to a customer.",
+      "source_columns": [
+        {
+          "table": "messy_warehouse.public.invoices",
+          "column": "inv_num"
+        }
+      ],
+      "rationale": "Primary key column with structured invoice number format represents unique invoices.",
+      "evidence": [
+        "invoices.inv_num samples: 'INV-2026-0009', 'INV-2026-0014', 'INV-2025-0004' — all 10 sample values are distinct",
+        "Referenced in bank_transactions.description field: 'REF INV-2025-0001', 'REF INV-2025-0004', 'REF INV-2026-0009'"
+      ],
+      "confidence": "high"
+    },
+    {
+      "name": "sales_opportunity",
+      "display_name": "Sales Opportunity",
+      "description": "Potential sales deal tracked through the sales pipeline.",
+      "source_columns": [
+        {
+          "table": "messy_warehouse.public.sales_opportunities",
+          "column": "opp_id"
+        }
+      ],
+      "rationale": "Primary key column with structured opportunity ID format represents unique sales opportunities.",
+      "evidence": [
+        "sales_opportunities.opp_id samples: 'OPP-00022', 'OPP-00040', 'OPP-00032' — all 10 sample values are distinct"
+      ],
+      "confidence": "high"
+    },
+    {
+      "name": "bank_transaction",
+      "display_name": "Bank Transaction",
+      "description": "Payment or transaction recorded in the company's bank account.",
+      "source_columns": [
+        {
+          "table": "messy_warehouse.public.bank_transactions",
+          "column": "txn_id"
+        }
+      ],
+      "rationale": "Primary key column with structured transaction ID format represents unique bank transactions.",
+      "evidence": [
+        "bank_transactions.txn_id samples: 'TXN-000001', 'TXN-000004', 'TXN-000011' — all 10 sample values are distinct"
+      ],
+      "confidence": "high"
+    },
+    {
+      "name": "sales_rep",
+      "display_name": "Sales Representative",
+      "description": "Sales team member who owns opportunities and forecasts.",
+      "source_columns": [
+        {
+          "table": "messy_warehouse.public.sales_opportunities",
+          "column": "owner_email"
+        },
+        {
+          "table": "messy_warehouse.public.revenue_forecast",
+          "column": "owner"
+        }
+      ],
+      "rationale": "Both columns represent sales representatives, though with different identifier formats (email vs username).",
+      "evidence": [
+        "sales_opportunities.owner_email samples: 'bob.martinez@example.com', 'david.okafor@example.com', 'alice.chen@example.com'",
+        "revenue_forecast.owner samples: 'grace.li', 'frank.singh', 'emma.park'",
+        "Both have similar cardinality (4 distinct and 3 distinct in samples) suggesting small sales team"
+      ],
+      "confidence": "medium"
+    }
+  ],
+  "measures": [
+    {
+      "name": "total_invoice_amount",
+      "display_name": "Total Invoice Amount",
+      "description": "Sum of all invoice totals including tax.",
+      "aggregation": "sum",
+      "sql_expression": "SUM(total)",
+      "source_tables": [
+        "messy_warehouse.public.invoices"
+      ],
+      "filter_expression": null,
+      "format_hint": "currency_usd",
+      "rationale": "The total column represents the final invoice amount that should be paid.",
+      "evidence": [
+        "invoices.total samples: Decimal('81000.00'), Decimal('272160.00'), Decimal('54000.00')",
+        "6 distinct values in 10 sample rows suggests aggregation is meaningful"
+      ],
+      "confidence": "high",
+      "caveats": []
+    },
+    {
+      "name": "total_invoice_subtotal",
+      "display_name": "Total Invoice Subtotal",
+      "description": "Sum of all invoice subtotals before tax.",
+      "aggregation": "sum",
+      "sql_expression": "SUM(subtotal)",
+      "source_tables": [
+        "messy_warehouse.public.invoices"
+      ],
+      "filter_expression": null,
+      "format_hint": "currency_usd",
+      "rationale": "The subtotal column represents pre-tax invoice amounts.",
+      "evidence": [
+        "invoices.subtotal samples: Decimal('75000.00'), Decimal('252000.00'), Decimal('50000.00')"
+      ],
+      "confidence": "high",
+      "caveats": []
+    },
+    {
+      "name": "total_invoice_tax",
+      "display_name": "Total Invoice Tax",
+      "description": "Sum of all tax amounts on invoices.",
+      "aggregation": "sum",
+      "sql_expression": "SUM(tax)",
+      "source_tables": [
+        "messy_warehouse.public.invoices"
+      ],
+      "filter_expression": null,
+      "format_hint": "currency_usd",
+      "rationale": "The tax column represents tax charged on invoices.",
+      "evidence": [
+        "invoices.tax samples: Decimal('6000.00'), Decimal('20160.00'), Decimal('4000.00')"
+      ],
+      "confidence": "high",
+      "caveats": []
+    },
+    {
+      "name": "total_bank_deposits",
+      "display_name": "Total Bank Deposits",
+      "description": "Sum of all amounts received in bank transactions.",
+      "aggregation": "sum",
+      "sql_expression": "SUM(amount)",
+      "source_tables": [
+        "messy_warehouse.public.bank_transactions"
+      ],
+      "filter_expression": null,
+      "format_hint": "currency_usd",
+      "rationale": "Bank transaction amounts represent actual cash received.",
+      "evidence": [
+        "bank_transactions.amount samples: Decimal('16200.00'), Decimal('32400.00'), Decimal('513000.00')",
+        "All sampled descriptions contain 'ACH PAYMENT' suggesting inbound payments"
+      ],
+      "confidence": "high",
+      "caveats": []
+    },
+    {
+      "name": "total_opportunity_value",
+      "display_name": "Total Opportunity Value",
+      "description": "Sum of deal amounts across all sales opportunities.",
+      "aggregation": "sum",
+      "sql_expression": "SUM(amount)",
+      "source_tables": [
+        "messy_warehouse.public.sales_opportunities"
+      ],
+      "filter_expression": null,
+      "format_hint": "currency_usd",
+      "rationale": "Opportunity amount represents potential deal value in the sales pipeline.",
+      "evidence": [
+        "sales_opportunities.amount samples: Decimal('500000.00'), Decimal('50000.00'), Decimal('25000.00')",
+        "Column is nullable (1 NULL in sample) indicating not all opportunities have amounts assigned"
+      ],
+      "confidence": "high",
+      "caveats": [
+        "Some opportunities may not have amounts populated yet"
+      ]
+    },
+    {
+      "name": "total_closed_won_value",
+      "display_name": "Total Closed Won Value",
+      "description": "Sum of deal amounts for opportunities that have been won.",
+      "aggregation": "sum",
+      "sql_expression": "SUM(amount)",
+      "source_tables": [
+        "messy_warehouse.public.sales_opportunities"
+      ],
+      "filter_expression": "stage = 'Closed Won'",
+      "format_hint": "currency_usd",
+      "rationale": "Filtering opportunities to Closed Won stage gives actual revenue from sales.",
+      "evidence": [
+        "sales_opportunities.stage samples include 'Closed Won'",
+        "sales_opportunities.stage has 5 distinct values in sample"
+      ],
+      "confidence": "high",
+      "caveats": []
+    },
+    {
+      "name": "arr_committed_sales",
+      "display_name": "ARR (Sales Committed)",
+      "description": "Annual recurring revenue as recorded in sales opportunities.",
+      "aggregation": "sum",
+      "sql_expression": "SUM(arr_committed)",
+      "source_tables": [
+        "messy_warehouse.public.sales_opportunities"
+      ],
+      "filter_expression": null,
+      "format_hint": "currency_usd",
+      "rationale": "The arr_committed column appears to represent annualized recurring revenue from deals.",
+      "evidence": [
+        "sales_opportunities.arr_committed samples: Decimal('5883566.74'), Decimal('684699.08'), Decimal('250000.00')",
+        "7 distinct values in 10 sample rows, with 1 NULL"
+      ],
+      "confidence": "medium",
+      "caveats": [
+        "ARR values appear inconsistent with deal amounts — e.g., $500k deal has $5.9M ARR, suggesting possible data quality issues"
+      ]
+    },
+    {
+      "name": "arr_implied_from_contract",
+      "display_name": "ARR (Implied from Contract)",
+      "description": "Annual recurring revenue calculated by annualizing deal amount based on contract length.",
+      "aggregation": "custom",
+      "sql_expression": "SUM(CASE WHEN contract_months > 0 THEN (amount * 12.0 / contract_months) ELSE 0 END)",
+      "source_tables": [
+        "messy_warehouse.public.sales_opportunities"
+      ],
+      "filter_expression": null,
+      "format_hint": "currency_usd",
+      "rationale": "ARR can be derived by converting deal amount to annual equivalent based on contract term.",
+      "evidence": [
+        "sales_opportunities.amount and contract_months are both present",
+        "contract_months samples: 1, 1, 36, 24, 24 — showing varying contract lengths"
+      ],
+      "confidence": "medium",
+      "caveats": [
+        "This is a derived calculation and may not match how the business defines ARR; requires validation"
+      ]
+    },
+    {
+      "name": "forecasted_revenue",
+      "display_name": "Forecasted Revenue",
+      "description": "Sum of revenue forecasted for future periods.",
+      "aggregation": "sum",
+      "sql_expression": "SUM(forecasted_amount)",
+      "source_tables": [
+        "messy_warehouse.public.revenue_forecast"
+      ],
+      "filter_expression": null,
+      "format_hint": "currency_usd",
+      "rationale": "Forecasted amount represents expected future revenue by month and segment.",
+      "evidence": [
+        "revenue_forecast.forecasted_amount samples: Decimal('49421.60'), Decimal('337210.86'), Decimal('390077.81')",
+        "All 10 sample values are distinct, suggesting granular forecasts"
+      ],
+      "confidence": "high",
+      "caveats": []
+    },
+    {
+      "name": "total_ltv_estimate",
+      "display_name": "Total Lifetime Value Estimate",
+      "description": "Sum of estimated customer lifetime value across forecast segments.",
+      "aggregation": "sum",
+      "sql_expression": "SUM(ltv_estimate)",
+      "source_tables": [
+        "messy_warehouse.public.revenue_forecast"
+      ],
+      "filter_expression": null,
+      "format_hint": "currency_usd",
+      "rationale": "LTV estimate appears to represent long-term customer value projections.",
+      "evidence": [
+        "revenue_forecast.ltv_estimate samples: Decimal('3953728.00'), Decimal('80930606.40'), Decimal('93618674.40')",
+        "All 10 sample values are distinct, column is nullable"
+      ],
+      "confidence": "medium",
+      "caveats": [
+        "LTV values appear extremely large relative to forecasted amounts — e.g., $49k forecast has $4M LTV, suggesting possible calculation issues or misunderstanding of metric"
+      ]
+    },
+    {
+      "name": "invoice_count",
+      "display_name": "Invoice Count",
+      "description": "Number of invoices issued.",
+      "aggregation": "count",
+      "sql_expression": "COUNT(*)",
+      "source_tables": [
+        "messy_warehouse.public.invoices"
+      ],
+      "filter_expression": null,
+      "format_hint": "integer",
+      "rationale": "Count of invoice records.",
+      "evidence": [
+        "invoices table contains invoice records with unique inv_num primary key"
+      ],
+      "confidence": "high",
+      "caveats": []
+    },
+    {
+      "name": "opportunity_count",
+      "display_name": "Opportunity Count",
+      "description": "Number of sales opportunities.",
+      "aggregation": "count",
+      "sql_expression": "COUNT(*)",
+      "source_tables": [
+        "messy_warehouse.public.sales_opportunities"
+      ],
+      "filter_expression": null,
+      "format_hint": "integer",
+      "rationale": "Count of opportunity records.",
+      "evidence": [
+        "sales_opportunities table contains opportunity records with unique opp_id primary key"
+      ],
+      "confidence": "high",
+      "caveats": []
+    },
+    {
+      "name": "bank_transaction_count",
+      "display_name": "Bank Transaction Count",
+      "description": "Number of bank transactions recorded.",
+      "aggregation": "count",
+      "sql_expression": "COUNT(*)",
+      "source_tables": [
+        "messy_warehouse.public.bank_transactions"
+      ],
+      "filter_expression": null,
+      "format_hint": "integer",
+      "rationale": "Count of bank transaction records.",
+      "evidence": [
+        "bank_transactions table contains transaction records with unique txn_id primary key"
+      ],
+      "confidence": "high",
+      "caveats": []
+    },
+    {
+      "name": "customer_count",
+      "display_name": "Customer Count",
+      "description": "Number of distinct customers.",
+      "aggregation": "count_distinct",
+      "sql_expression": "COUNT(DISTINCT customer)",
+      "source_tables": [
+        "messy_warehouse.public.invoices"
+      ],
+      "filter_expression": null,
+      "format_hint": "integer",
+      "rationale": "Distinct count of customer names provides customer count.",
+      "evidence": [
+        "invoices.customer has 6 distinct values in 10 sample rows",
+        "invoices.customer samples: 'Acme Corp.', 'Wayne Ent', 'Cyberdyne Sys', 'Stark Ind.'"
+      ],
+      "confidence": "medium",
+      "caveats": [
+        "Customer names may have spelling variations across systems making exact distinct counts unreliable"
+      ]
+    },
+    {
+      "name": "average_contract_length",
+      "display_name": "Average Contract Length",
+      "description": "Average contract duration in months across sales opportunities.",
+      "aggregation": "avg",
+      "sql_expression": "AVG(contract_months)",
+      "source_tables": [
+        "messy_warehouse.public.sales_opportunities"
+      ],
+      "filter_expression": null,
+      "format_hint": "decimal",
+      "rationale": "Average of contract_months gives typical deal duration.",
+      "evidence": [
+        "sales_opportunities.contract_months samples: 1, 1, 36, 24, 24",
+        "5 distinct values in sample, column is nullable"
+      ],
+      "confidence": "high",
+      "caveats": []
+    }
+  ],
+  "dimensions": [
+    {
+      "name": "invoice_status",
+      "display_name": "Invoice Status",
+      "description": "Current status of an invoice (Paid, Overdue, etc.).",
+      "source_column": {
+        "table": "messy_warehouse.public.invoices",
+        "column": "status"
+      },
+      "cardinality_hint": "low",
+      "sample_values": [
+        "Paid"
+      ],
+      "rationale": "Status field with low cardinality used to categorize invoices.",
+      "evidence": [
+        "invoices.status has 3 distinct values in 10 sample rows",
+        "All 10 sampled invoices show 'Paid' status, but distinct count of 3 indicates other statuses exist"
+      ],
+      "confidence": "high"
+    },
+    {
+      "name": "opportunity_stage",
+      "display_name": "Opportunity Stage",
+      "description": "Current stage of a sales opportunity in the pipeline.",
+      "source_column": {
+        "table": "messy_warehouse.public.sales_opportunities",
+        "column": "stage"
+      },
+      "cardinality_hint": "low",
+      "sample_values": [
+        "Proposal",
+        "Qualification",
+        "Closed Won",
+        "Prospecting"
+      ],
+      "rationale": "Stage field with low cardinality representing sales funnel stages.",
+      "evidence": [
+        "sales_opportunities.stage has 5 distinct values in 10 sample rows",
+        "Sample values show typical sales stages: 'Proposal', 'Qualification', 'Closed Won', 'Prospecting'"
+      ],
+      "confidence": "high"
+    },
+    {
+      "name": "customer_segment",
+      "display_name": "Customer Segment",
+      "description": "Market segment categorization (Enterprise, Mid-Market, SMB).",
+      "source_column": {
+        "table": "messy_warehouse.public.revenue_forecast",
+        "column": "segment"
+      },
+      "cardinality_hint": "low",
+      "sample_values": [
+        "SMB",
+        "Enterprise",
+        "Mid-Market"
+      ],
+      "rationale": "Segment field with low cardinality used for customer categorization.",
+      "evidence": [
+        "revenue_forecast.segment has 3 distinct values in 10 sample rows",
+        "Sample values: 'SMB', 'Enterprise', 'Mid-Market' — standard B2B segmentation"
+      ],
+      "confidence": "high"
+    },
+    {
+      "name": "bank_transaction_type",
+      "display_name": "Bank Transaction Type",
+      "description": "Type of bank transaction (ACH, Wire, etc.).",
+      "source_column": {
+        "table": "messy_warehouse.public.bank_transactions",
+        "column": "type"
+      },
+      "cardinality_hint": "low",
+      "sample_values": [
+        "ACH"
+      ],
+      "rationale": "Transaction type field with very low cardinality.",
+      "evidence": [
+        "bank_transactions.type has 2 distinct values in 10 sample rows",
+        "All 10 sampled transactions show 'ACH' type"
+      ],
+      "confidence": "high"
+    },
+    {
+      "name": "customer_name_invoices",
+      "display_name": "Customer Name (Invoices)",
+      "description": "Customer name as recorded in the invoicing system.",
+      "source_column": {
+        "table": "messy_warehouse.public.invoices",
+        "column": "customer"
+      },
+      "cardinality_hint": "medium",
+      "sample_values": [
+        "Acme Corp.",
+        "Wayne Ent",
+        "Cyberdyne Sys",
+        "Stark Ind."
+      ],
+      "rationale": "Customer names with moderate cardinality used for grouping invoice data.",
+      "evidence": [
+        "invoices.customer has 6 distinct values in 10 sample rows",
+        "Sample values show abbreviated company names: 'Acme Corp.', 'Wayne Ent', 'Cyberdyne Sys'"
+      ],
+      "confidence": "high"
+    },
+    {
+      "name": "account_name_opportunities",
+      "display_name": "Account Name (Opportunities)",
+      "description": "Account/customer name as recorded in the sales system.",
+      "source_column": {
+        "table": "messy_warehouse.public.sales_opportunities",
+        "column": "account_name"
+      },
+      "cardinality_hint": "medium",
+      "sample_values": [
+        "Tyrell Corporation",
+        "Soylent Group",
+        "Initech LLC",
+        "Cyberdyne Systems"
+      ],
+      "rationale": "Account names with moderate cardinality used for grouping opportunity data.",
+      "evidence": [
+        "sales_opportunities.account_name has 7 distinct values in 10 sample rows",
+        "Sample values show full company names: 'Tyrell Corporation', 'Soylent Group', 'Initech LLC', 'Cyberdyne Systems'"
+      ],
+      "confidence": "high"
+    },
+    {
+      "name": "forecast_owner",
+      "display_name": "Forecast Owner",
+      "description": "Sales rep who owns the revenue forecast.",
+      "source_column": {
+        "table": "messy_warehouse.public.revenue_forecast",
+        "column": "owner"
+      },
+      "cardinality_hint": "low",
+      "sample_values": [
+        "grace.li",
+        "frank.singh",
+        "emma.park"
+      ],
+      "rationale": "Owner field with low cardinality representing sales team members.",
+      "evidence": [
+        "revenue_forecast.owner has 3 distinct values in 10 sample rows",
+        "Sample values: 'grace.li', 'frank.singh', 'emma.park' — username format",
+        "Column is nullable"
+      ],
+      "confidence": "high"
+    },
+    {
+      "name": "opportunity_owner_email",
+      "display_name": "Opportunity Owner Email",
+      "description": "Email address of the sales rep who owns the opportunity.",
+      "source_column": {
+        "table": "messy_warehouse.public.sales_opportunities",
+        "column": "owner_email"
+      },
+      "cardinality_hint": "low",
+      "sample_values": [
+        "bob.martinez@example.com",
+        "david.okafor@example.com",
+        "alice.chen@example.com"
+      ],
+      "rationale": "Owner email with low cardinality representing sales team members.",
+      "evidence": [
+        "sales_opportunities.owner_email has 4 distinct values in 10 sample rows",
+        "Sample values: 'bob.martinez@example.com', 'david.okafor@example.com', 'alice.chen@example.com'",
+        "Column is nullable"
+      ],
+      "confidence": "high"
+    },
+    {
+      "name": "contract_term_months",
+      "display_name": "Contract Term (Months)",
+      "description": "Length of the contract in months.",
+      "source_column": {
+        "table": "messy_warehouse.public.sales_opportunities",
+        "column": "contract_months"
+      },
+      "cardinality_hint": "low",
+      "sample_values": [
+        1,
+        24,
+        36
+      ],
+      "rationale": "Contract duration field with low cardinality showing standard term lengths.",
+      "evidence": [
+        "sales_opportunities.contract_months has 5 distinct values in 10 sample rows",
+        "Sample values: 1, 1, 36, 24, 24",
+        "Column is nullable (integer type)"
+      ],
+      "confidence": "high"
+    },
+    {
+      "name": "forecast_notes",
+      "display_name": "Forecast Notes",
+      "description": "Qualitative notes about the revenue forecast.",
+      "source_column": {
+        "table": "messy_warehouse.public.revenue_forecast",
+        "column": "notes"
+      },
+      "cardinality_hint": "high",
+      "sample_values": [
+        "Pipeline softening",
+        "Renewal risk flagged",
+        "New logo heavy",
+        ""
+      ],
+      "rationale": "Free-text notes field with high cardinality for forecast commentary.",
+      "evidence": [
+        "revenue_forecast.notes has 4 distinct values in 10 sample rows",
+        "Sample values include: 'Pipeline softening', 'Renewal risk flagged', 'New logo heavy', empty strings",
+        "Column is nullable"
+      ],
+      "confidence": "high"
+    }
+  ],
+  "time_dimensions": [
+    {
+      "name": "invoice_date",
+      "display_name": "Invoice Date",
+      "description": "Date when the invoice was issued.",
+      "source_column": {
+        "table": "messy_warehouse.public.invoices",
+        "column": "inv_date"
+      },
+      "granularity_hint": "day",
+      "rationale": "Date field representing when invoices were created.",
+      "evidence": [
+        "invoices.inv_date is date type with all 10 sample values distinct",
+        "Sample values span from 2025 to 2026: datetime.date(2026, 1, 12), datetime.date(2025, 7, 4), datetime.date(2025, 6, 2)"
+      ],
+      "confidence": "high"
+    },
+    {
+      "name": "invoice_due_date",
+      "display_name": "Invoice Due Date",
+      "description": "Date when payment is due for the invoice.",
+      "source_column": {
+        "table": "messy_warehouse.public.invoices",
+        "column": "due_date"
+      },
+      "granularity_hint": "day",
+      "rationale": "Date field representing payment deadline.",
+      "evidence": [
+        "invoices.due_date is date type with all 10 sample values distinct",
+        "Sample values: datetime.date(2026, 2, 11), datetime.date(2025, 8, 3), datetime.date(2025, 7, 2)",
+        "Column is nullable"
+      ],
+      "confidence": "high"
+    },
+    {
+      "name": "bank_transaction_posted_date",
+      "display_name": "Bank Transaction Posted Date",
+      "description": "Date when the bank transaction was posted.",
+      "source_column": {
+        "table": "messy_warehouse.public.bank_transactions",
+        "column": "posted_date"
+      },
+      "granularity_hint": "day",
+      "rationale": "Date field representing when payments were processed.",
+      "evidence": [
+        "bank_transactions.posted_date is date type with 9 distinct values in 10 sample rows",
+        "Sample values: datetime.date(2025, 6, 11), datetime.date(2025, 7, 19), datetime.date(2026, 3, 3)"
+      ],
+      "confidence": "high"
+    },
+    {
+      "name": "opportunity_close_date",
+      "display_name": "Opportunity Close Date",
+      "description": "Expected or actual date when the deal will close or closed.",
+      "source_column": {
+        "table": "messy_warehouse.public.sales_opportunities",
+        "column": "close_date"
+      },
+      "granularity_hint": "day",
+      "rationale": "Date field representing when opportunities are expected to close.",
+      "evidence": [
+        "sales_opportunities.close_date is date type with all 10 sample values distinct",
+        "Sample values: datetime.date(2026, 3, 31), datetime.date(2026, 4, 8), datetime.date(2025, 7, 5)",
+        "Column is nullable"
+      ],
+      "confidence": "high"
+    },
+    {
+      "name": "opportunity_created_date",
+      "display_name": "Opportunity Created Date",
+      "description": "Date and time when the sales opportunity was created in the system.",
+      "source_column": {
+        "table": "messy_warehouse.public.sales_opportunities",
+        "column": "created_at"
+      },
+      "granularity_hint": "day",
+      "rationale": "Timestamp field representing opportunity creation, typically used at day granularity for analysis.",
+      "evidence": [
+        "sales_opportunities.created_at is timestamp type with all 10 sample values distinct",
+        "Sample values: datetime.datetime(2026, 2, 8, 0, 0), datetime.datetime(2025, 6, 29, 0, 0)",
+        "All sample timestamps have 00:00 time component suggesting day-level precision"
+      ],
+      "confidence": "high"
+    },
+    {
+      "name": "forecast_month",
+      "display_name": "Forecast Month",
+      "description": "Month for which revenue is forecasted.",
+      "source_column": {
+        "table": "messy_warehouse.public.revenue_forecast",
+        "column": "forecast_month"
+      },
+      "granularity_hint": "month",
+      "rationale": "Date field representing monthly forecast periods.",
+      "evidence": [
+        "revenue_forecast.forecast_month is date type with 7 distinct values in 10 sample rows",
+        "Sample values: datetime.date(2026, 6, 1), datetime.date(2026, 12, 1), datetime.date(2026, 1, 1)",
+        "All sample dates are first of month, indicating monthly granularity"
+      ],
+      "confidence": "high"
+    }
+  ],
+  "relationships": [
+    {
+      "name": "invoice_to_bank_transaction",
+      "display_name": "Invoice to Bank Transaction",
+      "description": "Links invoices to their corresponding bank payment transactions.",
+      "from_table": "messy_warehouse.public.invoices",
+      "from_column": "inv_num",
+      "to_table": "messy_warehouse.public.bank_transactions",
+      "to_column": "description",
+      "relationship_type": "derived",
+      "rationale": "Invoice numbers appear embedded in bank transaction descriptions, enabling linkage through text parsing.",
+      "evidence": [
+        "bank_transactions.description samples contain invoice references: 'REF INV-2025-0001', 'REF INV-2025-0004', 'REF INV-2026-0009'",
+        "invoices.inv_num samples: 'INV-2026-0009', 'INV-2025-0004', 'INV-2025-0001'",
+        "Pattern 'REF INV-YYYY-NNNN' consistently appears in transaction descriptions"
+      ],
+      "confidence": "high"
+    },
+    {
+      "name": "customer_invoice_to_opportunity",
+      "display_name": "Customer (Invoice to Opportunity)",
+      "description": "Links customer names between invoices and sales opportunities.",
+      "from_table": "messy_warehouse.public.invoices",
+      "from_column": "customer",
+      "to_table": "messy_warehouse.public.sales_opportunities",
+      "to_column": "account_name",
+      "relationship_type": "fuzzy_match",
+      "rationale": "Customer names exist in both tables but with inconsistent formatting requiring fuzzy matching.",
+      "evidence": [
+        "invoices.customer sample 'Cyberdyne Sys' appears similar to sales_opportunities.account_name 'Cyberdyne Systems'",
+        "Name abbreviation patterns differ: invoices use 'Wayne Ent', 'Acme Corp.' while opportunities use full names",
+        "Both columns have similar cardinality (6 and 7 distinct in samples)"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "name": "invoice_one_to_many_transactions",
+      "display_name": "Invoice to Transactions (One to Many)",
+      "description": "One invoice may have multiple partial payment transactions.",
+      "from_table": "messy_warehouse.public.invoices",
+      "from_column": "inv_num",
+      "to_table": "messy_warehouse.public.bank_transactions",
+      "to_column": "description",
+      "relationship_type": "one_to_many",
+      "rationale": "Bank transaction descriptions show 'PARTIAL' and 'FINAL' payment modifiers, indicating invoices can have multiple payments.",
+      "evidence": [
+        "bank_transactions.description samples: 'ACH PAYMENT VANDELAY IMPORTS PARTIAL REF INV-2025-0001', 'ACH PAYMENT VANDELAY IMPORTS FINAL REF INV-2025-0001'",
+        "Same invoice INV-2025-0001 appears in both partial and final payment descriptions",
+        "Pattern suggests invoices may be paid in installments"
+      ],
+      "confidence": "high"
+    },
+    {
+      "name": "opportunity_owner_to_forecast_owner",
+      "display_name": "Opportunity Owner to Forecast Owner",
+      "description": "Links sales reps between opportunities and forecasts.",
+      "from_table": "messy_warehouse.public.sales_opportunities",
+      "from_column": "owner_email",
+      "to_table": "messy_warehouse.public.revenue_forecast",
+      "to_column": "owner",
+      "relationship_type": "derived",
+      "rationale": "Both columns represent the same sales rep entity but in different identifier formats requiring parsing.",
+      "evidence": [
+        "sales_opportunities.owner_email format: 'bob.martinez@example.com', 'alice.chen@example.com'",
+        "revenue_forecast.owner format: 'grace.li', 'frank.singh', 'emma.park'",
+        "Username portion of email (before @) could match forecast owner field"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "name": "forecast_segment_dimension",
+      "display_name": "Customer Segment (Unlinked)",
+      "description": "Customer segment exists in forecast table but has no direct link to other tables.",
+      "from_table": "messy_warehouse.public.revenue_forecast",
+      "from_column": "segment",
+      "to_table": "",
+      "to_column": "",
+      "relationship_type": "unlinked_dimension",
+      "rationale": "Segment dimension appears only in revenue_forecast with no corresponding field in invoices or opportunities for linking.",
+      "evidence": [
+        "revenue_forecast.segment samples: 'SMB', 'Enterprise', 'Mid-Market'",
+        "No segment or similar categorization field exists in sales_opportunities or invoices tables",
+        "This limits ability to analyze historical performance by segment"
+      ],
+      "confidence": "high"
+    },
+    {
+      "name": "forecast_expected_churn_dimension",
+      "display_name": "Expected Churn Rate (Unlinked)",
+      "description": "Churn rate assumptions exist in forecast but don't link to actual customer data.",
+      "from_table": "messy_warehouse.public.revenue_forecast",
+      "from_column": "expected_churn_rate",
+      "to_table": "",
+      "to_column": "",
+      "relationship_type": "unlinked_dimension",
+      "rationale": "Churn rate field exists only in forecasting context with no actual churn tracking in other tables.",
+      "evidence": [
+        "revenue_forecast.expected_churn_rate samples: Decimal('0.1500'), Decimal('0.0500'), Decimal('0.0800')",
+        "No churn-related fields exist in invoices, opportunities, or transactions",
+        "Appears to be a forecast assumption rather than linked to actual data"
+      ],
+      "confidence": "high"
+    }
+  ],
+  "data_quality_flags": [
+    {
+      "severity": "error",
+      "title": "Invoice tax calculation does not match formula",
+      "description": "Tax amounts do not equal subtotal × consistent tax rate, suggesting data quality issues or varying tax rates not captured.",
+      "affected_columns": [
+        {
+          "table": "messy_warehouse.public.invoices",
+          "column": "subtotal"
+        },
+        {
+          "table": "messy_warehouse.public.invoices",
+          "column": "tax"
+        },
+        {
+          "table": "messy_warehouse.public.invoices",
+          "column": "total"
+        }
+      ],
+      "rationale": "Sample data shows inconsistent tax rates that violate expected formula total = subtotal + tax.",
+      "evidence": [
+        "Sample 1: subtotal 75000.00 + tax 6000.00 = 81000.00 (8% tax rate)",
+        "Sample 2: subtotal 252000.00 + tax 20160.00 = 272160.00 (8% tax rate)",
+        "Sample 3: subtotal 50000.00 + tax 4000.00 = 54000.00 (8% tax rate)",
+        "Tax rate appears consistent at ~8% but this should be validated across full dataset"
+      ]
+    },
+    {
+      "severity": "warning",
+      "title": "ARR values inconsistent with deal amounts",
+      "description": "ARR committed values are disproportionately large compared to opportunity amounts, suggesting calculation errors or misunderstanding of the metric.",
+      "affected_columns": [
+        {
+          "table": "messy_warehouse.public.sales_opportunities",
+          "column": "amount"
+        },
+        {
+          "table": "messy_warehouse.public.sales_opportunities",
+          "column": "arr_committed"
+        },
+        {
+          "table": "messy_warehouse.public.sales_opportunities",
+          "column": "contract_months"
+        }
+      ],
+      "rationale": "ARR should represent annualized revenue but sample values show ARR exceeding total deal value by 10x or more.",
+      "evidence": [
+        "Opportunity with amount $500,000 and contract 1 month has ARR $5,883,566.74 (11.7x the deal)",
+        "Opportunity with amount $50,000 and contract 1 month has ARR $684,699.08 (13.7x the deal)",
+        "Opportunity with amount $500,000 and contract 24 months has ARR $250,000.00 (reasonable annualization)",
+        "Inconsistent calculation methodology across opportunities"
+      ]
+    },
+    {
+      "severity": "warning",
+      "title": "LTV estimates extremely large relative to forecasted amounts",
+      "description": "Lifetime value estimates are 100-200x larger than monthly forecasted amounts, suggesting possible calculation error or unrealistic assumptions.",
+      "affected_columns": [
+        {
+          "table": "messy_warehouse.public.revenue_forecast",
+          "column": "forecasted_amount"
+        },
+        {
+          "table": "messy_warehouse.public.revenue_forecast",
+          "column": "ltv_estimate"
+        }
+      ],
+      "rationale": "LTV should be a multiple of monthly/annual revenue but observed ratios seem implausibly high.",
+      "evidence": [
+        "Forecast $49,421.60 with LTV $3,953,728.00 (80x monthly forecast)",
+        "Forecast $337,210.86 with LTV $80,930,606.40 (240x monthly forecast)",
+        "Forecast $56,179.75 with LTV $4,494,380.00 (80x monthly forecast)",
+        "Ratios vary widely and appear inconsistent with typical LTV:revenue multiples"
+      ]
+    },
+    {
+      "severity": "warning",
+      "title": "High NULL rate in opportunity ARR field",
+      "description": "ARR committed field has NULL values limiting revenue analysis completeness.",
+      "affected_columns": [
+        {
+          "table": "messy_warehouse.public.sales_opportunities",
+          "column": "arr_committed"
+        }
+      ],
+      "rationale": "Critical revenue metric should be populated for all opportunities to enable accurate pipeline analysis.",
+      "evidence": [
+        "1 NULL value observed in 10 sample rows (10% NULL rate in sample)",
+        "Missing ARR prevents accurate revenue forecasting from pipeline"
+      ]
+    },
+    {
+      "severity": "info",
+      "title": "Customer name inconsistencies across systems",
+      "description": "Same customers appear with different name formats in invoices vs opportunities, requiring fuzzy matching.",
+      "affected_columns": [
+        {
+          "table": "messy_warehouse.public.invoices",
+          "column": "customer"
+        },
+        {
+          "table": "messy_warehouse.public.sales_opportunities",
+          "column": "account_name"
+        }
+      ],
+      "rationale": "Inconsistent naming prevents straightforward joins and may cause under-counting in customer analysis.",
+      "evidence": [
+        "Cyberdyne appears as 'Cyberdyne Sys' in invoices and 'Cyberdyne Systems' in opportunities",
+        "Invoices use abbreviated forms: 'Wayne Ent', 'Acme Corp.' while opportunities use full names",
+        "No standardized customer master data or ID field present"
+      ]
+    },
+    {
+      "severity": "info",
+      "title": "All sampled invoices show Paid status",
+      "description": "Despite 3 distinct status values existing, all 10 samples show Paid status, limiting visibility into current receivables.",
+      "affected_columns": [
+        {
+          "table": "messy_warehouse.public.invoices",
+          "column": "status"
+        }
+      ],
+      "rationale": "Sample may not be representative of full dataset distribution; other statuses exist but weren't sampled.",
+      "evidence": [
+        "invoices.status has 3 distinct values but all 10 samples are 'Paid'",
+        "Cannot determine what other status values exist without querying full dataset"
+      ]
+    },
+    {
+      "severity": "info",
+      "title": "All sampled bank transactions are ACH type",
+      "description": "Despite 2 distinct transaction types existing, all 10 samples show ACH, limiting visibility into payment method diversity.",
+      "affected_columns": [
+        {
+          "table": "messy_warehouse.public.bank_transactions",
+          "column": "type"
+        }
+      ],
+      "rationale": "Sample may not be representative; other payment types exist but weren't sampled.",
+      "evidence": [
+        "bank_transactions.type has 2 distinct values but all 10 samples are 'ACH'",
+        "Cannot determine what the second transaction type is without additional data"
+      ]
+    },
+    {
+      "severity": "warning",
+      "title": "Sales rep identifier formats differ across tables",
+      "description": "Opportunities use email addresses while forecasts use usernames, making it difficult to link sales rep performance.",
+      "affected_columns": [
+        {
+          "table": "messy_warehouse.public.sales_opportunities",
+          "column": "owner_email"
+        },
+        {
+          "table": "messy_warehouse.public.revenue_forecast",
+          "column": "owner"
+        }
+      ],
+      "rationale": "Inconsistent identifiers prevent straightforward analysis of individual sales rep performance vs forecast.",
+      "evidence": [
+        "sales_opportunities.owner_email: 'bob.martinez@example.com', 'alice.chen@example.com'",
+        "revenue_forecast.owner: 'grace.li', 'frank.singh', 'emma.park'",
+        "No overlapping names between the two samples, unclear if same people"
+      ]
+    },
+    {
+      "severity": "info",
+      "title": "Nullable fields in core business metrics",
+      "description": "Several important fields allow NULLs which may complicate aggregations and reporting.",
+      "affected_columns": [
+        {
+          "table": "messy_warehouse.public.invoices",
+          "column": "due_date"
+        },
+        {
+          "table": "messy_warehouse.public.sales_opportunities",
+          "column": "owner_email"
+        },
+        {
+          "table": "messy_warehouse.public.sales_opportunities",
+          "column": "amount"
+        },
+        {
+          "table": "messy_warehouse.public.sales_opportunities",
+          "column": "contract_months"
+        },
+        {
+          "table": "messy_warehouse.public.sales_opportunities",
+          "column": "arr_committed"
+        },
+        {
+          "table": "messy_warehouse.public.sales_opportunities",
+          "column": "close_date"
+        },
+        {
+          "table": "messy_warehouse.public.revenue_forecast",
+          "column": "ltv_estimate"
+        },
+        {
+          "table": "messy_warehouse.public.revenue_forecast",
+          "column": "expected_churn_rate"
+        },
+        {
+          "table": "messy_warehouse.public.revenue_forecast",
+          "column": "owner"
+        }
+      ],
+      "rationale": "NULLs in business-critical fields require careful handling in calculations and reporting.",
+      "evidence": [
+        "Multiple core metrics allow NULL: opportunity amount, ARR, close date, contract months, invoice due date",
+        "This may indicate data quality issues or legitimate business cases (e.g., opportunities without amounts yet)"
+      ]
+    }
+  ]
+}
