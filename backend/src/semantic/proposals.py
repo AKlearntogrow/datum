@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from enum import Enum
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 # ----------------------------------------------------------------------
@@ -144,17 +144,51 @@ class TimeDimensionProposal(_Strict):
 
 
 class RelationshipProposal(_Strict):
+    """A relationship between two tables, or a flagged dangling dimension.
+
+    For `unlinked_dimension`, `to_table` and `to_column` are null:
+    the point is that there is no target. For every other relationship
+    type, both sides must be populated.
+    """
+
     name: str
     display_name: str
     description: str
     from_table: str
     from_column: str
-    to_table: str
-    to_column: str
+    to_table: str | None = None
+    to_column: str | None = None
     relationship_type: RelationshipType
     rationale: str
     evidence: list[str] = Field(default_factory=list)
     confidence: Confidence
+
+    @model_validator(mode="after")
+    def _validate_target_sides(self) -> RelationshipProposal:
+        """Enforce the two real-world cases:
+        - unlinked_dimension: to_table and to_column MUST be null
+        - every other type: to_table and to_column MUST both be populated
+        """
+        both_none = self.to_table is None and self.to_column is None
+        both_set = self.to_table is not None and self.to_column is not None
+
+        if not (both_none or both_set):
+            raise ValueError(
+                "to_table and to_column must both be set or both be null"
+            )
+
+        if self.relationship_type == RelationshipType.UNLINKED_DIMENSION:
+            if not both_none:
+                raise ValueError(
+                    "unlinked_dimension relationships must have null to_table and to_column"
+                )
+        else:
+            if not both_set:
+                raise ValueError(
+                    f"relationship_type '{self.relationship_type.value}' requires to_table and to_column"
+                )
+
+        return self
 
 
 class DataQualityFlag(_Strict):
