@@ -57,6 +57,9 @@ class EntityDefinition(Base):
     rejected_by: Mapped[str | None] = mapped_column(String(64), nullable=True)
     rejected_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     rejected_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Last time this entity was moved back to 'proposed' from a terminal state.
+    # Does NOT clear approved_by/at or rejected_by/at — the prior decision is preserved for audit.
+    reopened_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     supersedes_id: Mapped[str | None] = mapped_column(
         String(36), ForeignKey("entity_definitions.id"), nullable=True
     )

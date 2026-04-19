@@ -53,6 +53,19 @@ export function EntityCard({ entity, onChanged }: Props) {
     }
   }
 
+  async function handleReopen() {
+    setWorking(true);
+    setError(null);
+    try {
+      const updated = await api.reopenEntity(entity.id);
+      onChanged(updated);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Unknown error");
+    } finally {
+      setWorking(false);
+    }
+  }
+
   return (
     <article className="border border-neutral-800 rounded-lg p-6 bg-neutral-950 space-y-4">
       <header className="flex items-start justify-between gap-4">
@@ -102,12 +115,15 @@ export function EntityCard({ entity, onChanged }: Props) {
       )}
 
       {isTerminal && (
-        <footer className="text-xs text-neutral-500">
+        <footer className="text-xs text-neutral-500 space-y-1">
           {entity.status === "approved" && entity.approved_by && entity.approved_at && (
-            <>Approved by {entity.approved_by} on {new Date(entity.approved_at).toLocaleString()}</>
+            <div>Approved by {entity.approved_by} on {new Date(entity.approved_at).toLocaleString()}</div>
           )}
           {entity.status === "rejected" && entity.rejected_by && entity.rejected_at && (
-            <>Rejected by {entity.rejected_by} on {new Date(entity.rejected_at).toLocaleString()}</>
+            <div>Rejected by {entity.rejected_by} on {new Date(entity.rejected_at).toLocaleString()}</div>
+          )}
+          {entity.reopened_at && (
+            <div className="text-neutral-600 italic">Previously reviewed; reopened on {new Date(entity.reopened_at).toLocaleString()}</div>
           )}
         </footer>
       )}
@@ -135,6 +151,19 @@ export function EntityCard({ entity, onChanged }: Props) {
             className="flex-1 px-4 py-2 rounded bg-neutral-800 hover:bg-neutral-700 disabled:opacity-50 disabled:cursor-not-allowed text-neutral-200 font-medium"
           >
             {working ? "…" : "Reject"}
+          </button>
+        </div>
+      )}
+
+      {isTerminal && entity.status !== "superseded" && (
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={handleReopen}
+            disabled={working}
+            className="flex-1 px-4 py-2 rounded bg-neutral-800 hover:bg-neutral-700 disabled:opacity-50 disabled:cursor-not-allowed text-neutral-200 font-medium border border-neutral-700"
+          >
+            {working ? "…" : "Reopen for review"}
           </button>
         </div>
       )}

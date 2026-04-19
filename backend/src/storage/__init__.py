@@ -11,6 +11,7 @@ from src.storage.entities import (
     load_entity_definition,
     approve_entity_definition,
     reject_entity_definition,
+    reopen_entity_definition,
     update_entity_definition,
 )
 from src.storage.snapshots import (
@@ -28,5 +29,6 @@ __all__ = [
     "load_entity_definition",
     "approve_entity_definition",
     "reject_entity_definition",
+    "reopen_entity_definition",
     "update_entity_definition",
 ]

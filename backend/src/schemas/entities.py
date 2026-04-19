@@ -109,6 +109,7 @@ class EntityResponse(BaseModel):
     rejected_by: str | None = None
     rejected_at: datetime | None = None
     rejected_reason: str | None = None
+    reopened_at: datetime | None = None
 
     # Provenance (optional to consumers, useful for debugging)
     prompt_version: str | None = None
@@ -163,6 +164,7 @@ def entity_to_response(entity: EntityDefinition) -> EntityResponse:
         rejected_by=entity.rejected_by,
         rejected_at=entity.rejected_at,
         rejected_reason=entity.rejected_reason,
+        reopened_at=entity.reopened_at,
         prompt_version=entity.prompt_version,
         model=entity.model,
     )

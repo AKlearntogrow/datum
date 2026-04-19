@@ -28,6 +28,7 @@ from src.storage import (
     list_entity_definitions,
     load_entity_definition,
     reject_entity_definition,
+    reopen_entity_definition,
     update_entity_definition,
 )
 from src.storage.entities import EntityStorageError
@@ -114,6 +115,22 @@ def reject_entity(
     entity = reject_entity_definition(
         db, entity_id, rejected_by=rejected_by, reason=reason
     )
+    db.commit()
+    db.refresh(entity)
+    return entity_to_response(entity)
+
+
+@router.post("/{entity_id}/reopen", response_model=EntityResponse)
+def reopen_entity(
+    entity_id: str,
+    db: Session = Depends(get_db),
+) -> EntityResponse:
+    """Move an approved or rejected entity back to proposed for re-evaluation.
+
+    Prior approval/rejection metadata is preserved for audit. Only status
+    and reopened_at change.
+    """
+    entity = reopen_entity_definition(db, entity_id)
     db.commit()
     db.refresh(entity)
     return entity_to_response(entity)

@@ -208,3 +208,32 @@ def update_entity_definition(
 
     db.flush()
     return entity
+
+
+def reopen_entity_definition(
+    db: Session,
+    entity_id: str,
+) -> EntityDefinition:
+    """Move an approved or rejected entity back to 'proposed'.
+
+    Preserves the approved_by/at and rejected_by/at fields — the prior
+    decision is part of the audit trail and must not be lost. Only status
+    and reopened_at change.
+
+    Idempotent on already-proposed entities (just updates reopened_at).
+    """
+    entity = db.get(EntityDefinition, entity_id)
+    if entity is None:
+        raise EntityStorageError(f"Entity {entity_id} not found")
+
+    if entity.status == "superseded":
+        raise EntityStorageError(
+            "Cannot reopen a superseded entity — create a new definition that supersedes it instead"
+        )
+
+    entity.status = "proposed"
+    entity.reopened_at = datetime.now(timezone.utc)
+    # Deliberately do NOT clear approved_*/rejected_*. The prior decision
+    # remains visible so reviewers can see "previously approved by X on Y".
+    db.flush()
+    return entity
