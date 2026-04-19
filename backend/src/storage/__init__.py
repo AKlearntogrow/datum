@@ -17,12 +17,14 @@ from src.storage.entities import (
 from src.storage.snapshots import (
     persist_snapshot,
     load_snapshot,
+    load_most_recent_snapshot,
     snapshot_column_id_for,
 )
 
 __all__ = [
     "persist_snapshot",
     "load_snapshot",
+    "load_most_recent_snapshot",
     "snapshot_column_id_for",
     "list_entity_definitions",
     "persist_entity_proposals",

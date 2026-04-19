@@ -131,6 +131,42 @@ def load_snapshot(db: Session, snapshot_id: str) -> SchemaSnapshotDC | None:
     )
 
 
+def load_most_recent_snapshot(
+    db: Session, source_database: str
+) -> tuple[SchemaSnapshotDC, str | None] | None:
+    """Return the most recent snapshot for a given source database, plus
+    the prompt version that was used against it (if any entity definitions
+    were persisted). Returns None if no snapshot exists yet.
+
+    Used by the ingest endpoint to decide whether to skip a redundant run.
+    """
+    stmt = (
+        select(SchemaSnapshotORM.id)
+        .where(SchemaSnapshotORM.source_database == source_database)
+        .order_by(SchemaSnapshotORM.captured_at.desc())
+        .limit(1)
+    )
+    snap_id = db.execute(stmt).scalar_one_or_none()
+    if snap_id is None:
+        return None
+
+    snapshot = load_snapshot(db, snap_id)
+    if snapshot is None:
+        return None
+
+    # Find the prompt version from any entity definition linked to this snapshot.
+    # All entities from a single run share the same prompt_version.
+    from src.models.entities import EntityDefinition
+    prompt_version_stmt = (
+        select(EntityDefinition.prompt_version)
+        .where(EntityDefinition.source_snapshot_id == snap_id)
+        .limit(1)
+    )
+    prompt_version = db.execute(prompt_version_stmt).scalar_one_or_none()
+
+    return snapshot, prompt_version
+
+
 def snapshot_column_id_for(
     db: Session,
     snapshot_id: str,

@@ -22,13 +22,22 @@ export function IngestButton({ onCompleted }: Props) {
     setSummary(null);
     try {
       const res = await api.runIngest(DEFAULT_WAREHOUSE_URL);
-      setSummary(
-        `Ingested ${res.tables_ingested} tables (${res.columns_ingested} columns); ` +
-          `proposed ${res.entities_proposed} entities, ${res.measures_proposed} measures, ` +
-          `${res.dimensions_proposed} dimensions, ${res.time_dimensions_proposed} time dimensions, ` +
-          `${res.relationships_proposed} relationships, ${res.data_quality_flags_proposed} flags. ` +
-          `${res.entities_persisted} entities persisted.`
-      );
+      if (res.skipped) {
+        const when = res.last_snapshot_captured_at
+          ? new Date(res.last_snapshot_captured_at).toLocaleString()
+          : "unknown time";
+        setSummary(
+          `No changes detected since the last ingestion on ${when}. Nothing new to propose.`
+        );
+      } else {
+        setSummary(
+          `Ingested ${res.tables_ingested} tables (${res.columns_ingested} columns); ` +
+            `proposed ${res.entities_proposed} entities, ${res.measures_proposed} measures, ` +
+            `${res.dimensions_proposed} dimensions, ${res.time_dimensions_proposed} time dimensions, ` +
+            `${res.relationships_proposed} relationships, ${res.data_quality_flags_proposed} flags. ` +
+            `${res.entities_persisted} entities persisted.`
+        );
+      }
       onCompleted();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unknown error");

@@ -2,15 +2,13 @@
 
 from __future__ import annotations
 
+from datetime import datetime
+
 from pydantic import BaseModel, ConfigDict
 
 
 class IngestRequest(BaseModel):
-    """POST body to kick off an ingestion run.
-
-    v0 supports only Postgres and takes a connection URL. Future revisions
-    will accept an inline connector type and per-type config.
-    """
+    """POST body to kick off an ingestion run."""
 
     model_config = ConfigDict(extra="forbid")
 
@@ -18,23 +16,31 @@ class IngestRequest(BaseModel):
 
 
 class IngestResponse(BaseModel):
-    """Summary of one ingestion run."""
+    """Summary of one ingestion run.
+
+    When `skipped` is True, the warehouse was structurally unchanged since
+    the last run and no new snapshot was created. All counts are zero in
+    that case, and `last_snapshot_id` / `last_snapshot_captured_at` point
+    to the most recent existing snapshot. See ADR 0008.
+    """
 
     model_config = ConfigDict(extra="forbid")
 
-    snapshot_id: str
+    skipped: bool = False
+    reason: str | None = None
+    last_snapshot_id: str | None = None
+    last_snapshot_captured_at: datetime | None = None
+
+    snapshot_id: str | None = None
     source_database: str
-    tables_ingested: int
-    columns_ingested: int
+    tables_ingested: int = 0
+    columns_ingested: int = 0
 
-    entities_proposed: int
-    measures_proposed: int
-    dimensions_proposed: int
-    time_dimensions_proposed: int
-    relationships_proposed: int
-    data_quality_flags_proposed: int
+    entities_proposed: int = 0
+    measures_proposed: int = 0
+    dimensions_proposed: int = 0
+    time_dimensions_proposed: int = 0
+    relationships_proposed: int = 0
+    data_quality_flags_proposed: int = 0
 
-    entities_persisted: int
-    """Only entities are persisted in v0 (ADR 0007: tracer bullet per category).
-    Other categories are proposed but not yet stored; counts are still reported
-    so the UI can show totals."""
+    entities_persisted: int = 0
