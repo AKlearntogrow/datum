@@ -122,8 +122,9 @@ class Proposer:
         )
 
         text = _extract_text(response)
+        cleaned = _strip_json_wrappers(text)
         try:
-            return ProposalSet.model_validate_json(text)
+            return ProposalSet.model_validate_json(cleaned)
         except Exception as exc:
             raise ProposerError(
                 f"Could not parse or validate LLM response: {exc}\n\n"
@@ -154,3 +155,32 @@ def _extract_text(response: Any) -> str:
             return text
 
     raise ProposerError(f"LLM response has no text block: {content!r}")
+
+
+def _strip_json_wrappers(text: str) -> str:
+    """Remove common LLM packaging around JSON responses.
+
+    Handles:
+    - Leading/trailing whitespace
+    - Markdown code fences: ```json ... ``` or ``` ... ```
+    - Explanatory prose before or after the JSON object
+
+    Strategy: find the first '{' and last '}'; take everything between.
+    This is forgiving because the JSON body itself is validated strictly
+    by Pydantic afterwards. If the slice isn't valid JSON, Pydantic fails
+    with a clear error anyway.
+    """
+    stripped = text.strip()
+
+    # Fast path: already clean JSON.
+    if stripped.startswith("{") and stripped.endswith("}"):
+        return stripped
+
+    # Locate the JSON object by its outermost braces. Works regardless
+    # of whether wrappers are code fences, prose, or both.
+    start = stripped.find("{")
+    end = stripped.rfind("}")
+    if start == -1 or end == -1 or end <= start:
+        # Nothing JSON-like in here. Let Pydantic produce the error.
+        return stripped
+    return stripped[start : end + 1]
