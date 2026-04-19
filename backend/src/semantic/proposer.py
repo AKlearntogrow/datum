@@ -27,9 +27,11 @@ every proposal in the app database for audit (ADR 0003, ADR 0005)."""
 DEFAULT_MODEL = "claude-sonnet-4-5"
 """Development default. Overridden by ANTHROPIC_MODEL env var."""
 
-MAX_OUTPUT_TOKENS = 8192
-"""Enough for a full ProposalSet on a realistic warehouse. Raise only
-if we see empty tail arrays that look truncated."""
+MAX_OUTPUT_TOKENS = 16384
+"""Large enough for six categories with detailed rationales and evidence
+on a realistic messy warehouse. Our first smoke run hit truncation at
+8192 on 4 tables; 16384 gives comfortable headroom. Revisit for production
+if we see proposals empty or the tail categories consistently short."""
 
 SYSTEM_PROMPT_PATH = (
     Path(__file__).resolve().parent / "prompts" / "system.md"
