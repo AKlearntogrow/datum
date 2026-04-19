@@ -13,10 +13,15 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 
+from typing import TYPE_CHECKING
+
 from sqlalchemy import DateTime, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.models.base import Base
+
+if TYPE_CHECKING:
+    from src.models.snapshots import SnapshotColumn
 
 
 def _uuid() -> str:
@@ -101,3 +106,4 @@ class EntitySourceColumn(Base):
     )
 
     entity: Mapped["EntityDefinition"] = relationship(back_populates="source_columns")
+    snapshot_column: Mapped["SnapshotColumn"] = relationship(lazy="selectin")
