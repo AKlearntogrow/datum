@@ -12,6 +12,7 @@ from src.connectors.exceptions import (
     TableNotFound,
     UnsupportedOperation,
 )
+from src.connectors.postgres import PostgresConnector
 from src.connectors.types import RawColumn, RawTableSchema, SampleRows, TableRef
 
 __all__ = [
@@ -21,6 +22,7 @@ __all__ = [
     "PermissionDenied",
     "TableNotFound",
     "UnsupportedOperation",
+    "PostgresConnector",
     "TableRef",
     "RawColumn",
     "RawTableSchema",
