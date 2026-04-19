@@ -170,9 +170,17 @@ class RelationshipProposal(_Strict):
 
     @model_validator(mode="after")
     def _validate_target_sides(self) -> RelationshipProposal:
-        """Enforce the two real-world cases:
-        - unlinked_dimension: to_table and to_column MUST be null
-        - every other type: to_table and to_column MUST both be populated
+        """Enforce target-side coherence.
+
+        Rules:
+        - For `unlinked_dimension`: to_table and to_column are INFORMATIONAL.
+          They may be null (the intuitive case) or populated (the LLM hinting
+          at where the dimension *might* have been linked if the data were
+          cleaner). Both are accepted; neither implies the dimension is linked.
+        - For every other relationship type: to_table and to_column MUST
+          both be populated.
+        - The "exactly one side populated" case is always invalid — it means
+          the LLM started writing a target and stopped.
         """
         both_none = self.to_table is None and self.to_column is None
         both_set = self.to_table is not None and self.to_column is not None
@@ -182,16 +190,10 @@ class RelationshipProposal(_Strict):
                 "to_table and to_column must both be set or both be null"
             )
 
-        if self.relationship_type == RelationshipType.UNLINKED_DIMENSION:
-            if not both_none:
-                raise ValueError(
-                    "unlinked_dimension relationships must have null to_table and to_column"
-                )
-        else:
-            if not both_set:
-                raise ValueError(
-                    f"relationship_type '{self.relationship_type.value}' requires to_table and to_column"
-                )
+        if self.relationship_type != RelationshipType.UNLINKED_DIMENSION and not both_set:
+            raise ValueError(
+                f"relationship_type '{self.relationship_type.value}' requires to_table and to_column"
+            )
 
         return self
 
