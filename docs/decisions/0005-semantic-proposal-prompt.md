@@ -249,6 +249,18 @@ When we tune the prompt, old proposals remain traceable to the prompt version th
 - Verbose rationales inflate output tokens; a typical full response may run 3-5k output tokens.
 - Asking the LLM to produce six categories instead of four in v1 means more for it to reason about per snapshot. Watch for quality degradation.
 
+## Schema evolution principle
+
+On our first smoke-test runs we discovered three places where the schema was too narrow to represent what the LLM was genuinely trying to say:
+
+1. `RelationshipProposal` required both `to_table` and `to_column` to be strings, but `unlinked_dimension` relationships have no target.
+2. `DimensionProposal.sample_values` was typed as `list[str]`, but columns like `contract_months` are integers and should be sampled as such.
+3. `DataQualityFlag.affected_columns` required at least one column, but cross-table and aggregate flags (e.g., "Q1 forecast exceeds actuals by 15%") aren't about any single column.
+
+Each of these was our schema failing to model the real world, not the LLM hallucinating.
+
+**Principle for future schema changes:** start permissive, then tighten based on observed runs. Over-strictness looks like safety but what it actually catches most often is the LLM being more right than our types allowed. Strictness should be reserved for enumerated fields (confidence, severity, aggregation, etc.) where the set of valid values is genuinely closed.
+
 ## Revisit when
 
 - A specific customer's warehouse consistently produces empty proposals — signals the prompt is too strict.

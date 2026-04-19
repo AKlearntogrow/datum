@@ -126,7 +126,12 @@ class DimensionProposal(_Strict):
     description: str
     source_column: ColumnRef
     cardinality_hint: CardinalityHint
-    sample_values: list[str] = Field(default_factory=list, max_length=10)
+    # Sample values carry whatever Python type the column has: strings for
+    # varchar/text, ints for integer columns like contract_months, etc.
+    # Dates and timestamps should be rendered as ISO strings by the LLM.
+    sample_values: list[str | int | float | bool | None] = Field(
+        default_factory=list, max_length=10
+    )
     rationale: str
     evidence: list[str] = Field(default_factory=list)
     confidence: Confidence
@@ -192,10 +197,18 @@ class RelationshipProposal(_Strict):
 
 
 class DataQualityFlag(_Strict):
+    """A pattern in the data worth flagging to the human reviewer.
+
+    `affected_columns` may be empty for cross-table or aggregate flags
+    (e.g., "Q1 forecast exceeds actual revenue by 15%"). In those cases
+    the `evidence` field carries the specifics. Column-scoped flags
+    should always populate affected_columns.
+    """
+
     severity: Severity
     title: str
     description: str
-    affected_columns: list[ColumnRef] = Field(..., min_length=1)
+    affected_columns: list[ColumnRef] = Field(default_factory=list)
     rationale: str
     evidence: list[str] = Field(default_factory=list)
 

@@ -78,7 +78,7 @@ Return a single JSON object with exactly these six keys. Each is an array. Use e
       "description": "...",
       "source_column": {"table": "schema.table", "column": "col"},
       "cardinality_hint": "low | medium | high | very_high",
-      "sample_values": ["up to 5 representative values from the snapshot"],
+      "sample_values": ["up to 5 representative values from the snapshot — strings, numbers, or booleans as the column type dictates; render dates as ISO strings"],
       "rationale": "...",
       "evidence": ["..."],
       "confidence": "high | medium | low"
@@ -119,7 +119,7 @@ Return a single JSON object with exactly these six keys. Each is an array. Use e
       "severity": "info | warning | error",
       "title": "Short title of the flag",
       "description": "One-line description of the issue and its consequence.",
-      "affected_columns": [{"table": "schema.table", "column": "col"}],
+      "affected_columns": [{"table": "schema.table", "column": "col"}],  // optional — may be [] for cross-table or aggregate flags
       "rationale": "...",
       "evidence": ["..."]
     }
