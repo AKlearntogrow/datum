@@ -1,70 +1,26 @@
 # ===== Python =====
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-!frontend/src/lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
+   # File-extension patterns are safe to apply globally — they only match Python artifacts.
+   __pycache__/
+   *.py[cod]
+   *$py.class
+   *.so
+   .Python
+   *.egg-info/
+   *.egg
+   .installed.cfg
+   MANIFEST
 
-# Virtual environments
-venv/
-env/
-ENV/
-.venv/
-
-# ===== Node / Next.js =====
-node_modules/
-.next/
-out/
-.turbo/
-*.tsbuildinfo
-next-env.d.ts
-
-# ===== Environment & secrets =====
-.env
-.env.local
-.env.*.local
-*.pem
-*.key
-
-# ===== IDE / editors =====
-.vscode/
-.idea/
-*.swp
-*.swo
-.DS_Store
-Thumbs.db
-
-# ===== Testing =====
-.pytest_cache/
-.coverage
-htmlcov/
-coverage.xml
-*.cover
-
-# ===== Docker =====
-postgres_data/
-
-# ===== Logs =====
-*.log
-logs/
-
-# ===== Misc =====
-.mypy_cache/
-.ruff_cache/
+   # Directory-name patterns are anchored to backend/ to prevent collisions with frontend.
+   # (e.g. "lib/" without anchoring would also match frontend/src/lib/.)
+   backend/**/build/
+   backend/**/develop-eggs/
+   backend/**/dist/
+   backend/**/downloads/
+   backend/**/eggs/
+   backend/**/.eggs/
+   backend/**/lib/
+   backend/**/lib64/
+   backend/**/parts/
+   backend/**/sdist/
+   backend/**/var/
+   backend/**/wheels/
