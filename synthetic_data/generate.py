@@ -394,13 +394,13 @@ def main() -> None:
     with psycopg.connect(WAREHOUSE_URL) as conn:
         with conn.cursor() as cur:
             print("Wiping existing data...")
-            cur.execute("TRUNCATE sales_opportunities, invoices, bank_transactions, revenue_forecast")
+            cur.execute("TRUNCATE sales_cloud.sales_opportunities, sales_cloud.invoices, sales_cloud.bank_transactions, sales_cloud.revenue_forecast")
 
             print("Generating opportunities...")
             opps = generate_opportunities()
             cur.executemany(
                 """
-                INSERT INTO sales_opportunities
+                INSERT INTO sales_cloud.sales_opportunities
                     (opp_id, account_name, owner_email, stage, amount, contract_months, arr_committed, close_date, created_at)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """,
@@ -412,7 +412,7 @@ def main() -> None:
             invs = generate_invoices(opps)
             cur.executemany(
                 """
-                INSERT INTO invoices
+                INSERT INTO sales_cloud.invoices
                     (inv_num, customer, inv_date, due_date, subtotal, tax, total, status)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                 """,
@@ -424,7 +424,7 @@ def main() -> None:
             bank_rows = generate_bank_transactions(invs)
             cur.executemany(
                 """
-                INSERT INTO bank_transactions
+                INSERT INTO sales_cloud.bank_transactions
                     (txn_id, posted_date, description, amount, type)
                 VALUES (%s, %s, %s, %s, %s)
                 """,
@@ -436,7 +436,7 @@ def main() -> None:
             forecast_rows = generate_forecast(opps)
             cur.executemany(
                 """
-                INSERT INTO revenue_forecast
+                INSERT INTO sales_cloud.revenue_forecast
                     (forecast_month, segment, forecasted_amount, ltv_estimate, expected_churn_rate, owner, notes)
                 VALUES (%s, %s, %s, %s, %s, %s, %s)
                 """,

@@ -5,9 +5,17 @@
 \connect messy_warehouse
 
 -- ==============================================================
--- Table 1: sales_opportunities (CRM-like)
+-- Create schemas
 -- ==============================================================
-CREATE TABLE sales_opportunities (
+CREATE SCHEMA sales_cloud;
+CREATE SCHEMA finance_mart;
+CREATE SCHEMA product_analytics;
+CREATE SCHEMA legacy_erp;
+
+-- ==============================================================
+-- sales_cloud.sales_opportunities (CRM-like)
+-- ==============================================================
+CREATE TABLE sales_cloud.sales_opportunities (
     opp_id           VARCHAR(20) PRIMARY KEY,
     account_name     VARCHAR(200) NOT NULL,
     owner_email      VARCHAR(200),
@@ -20,9 +28,9 @@ CREATE TABLE sales_opportunities (
 );
 
 -- ==============================================================
--- Table 2: invoices (Accounting-like)
+-- sales_cloud.invoices (Accounting-like)
 -- ==============================================================
-CREATE TABLE invoices (
+CREATE TABLE sales_cloud.invoices (
     inv_num    VARCHAR(30) PRIMARY KEY,
     customer   VARCHAR(200) NOT NULL,
     inv_date   DATE NOT NULL,
@@ -34,9 +42,9 @@ CREATE TABLE invoices (
 );
 
 -- ==============================================================
--- Table 3: bank_transactions (bank feed)
+-- sales_cloud.bank_transactions (bank feed)
 -- ==============================================================
-CREATE TABLE bank_transactions (
+CREATE TABLE sales_cloud.bank_transactions (
     txn_id       VARCHAR(30) PRIMARY KEY,
     posted_date  DATE NOT NULL,
     description  VARCHAR(500),
@@ -45,9 +53,9 @@ CREATE TABLE bank_transactions (
 );
 
 -- ==============================================================
--- Table 4: revenue_forecast (FP&A)
+-- sales_cloud.revenue_forecast (FP&A)
 -- ==============================================================
-CREATE TABLE revenue_forecast (
+CREATE TABLE sales_cloud.revenue_forecast (
     forecast_month        DATE NOT NULL,
     segment               VARCHAR(50) NOT NULL,
     forecasted_amount     NUMERIC(14, 2) NOT NULL,
