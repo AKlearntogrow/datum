@@ -20,6 +20,13 @@ from src.storage.data_sources import (
     load_data_source,
     delete_data_source,
 )
+from src.storage.scopes import (
+    validate_included_schemas,
+    create_scope,
+    list_scopes,
+    load_scope,
+    delete_scope,
+)
 from src.storage.snapshots import (
     persist_snapshot,
     load_snapshot,
@@ -32,6 +39,11 @@ __all__ = [
     "list_data_sources",
     "load_data_source",
     "delete_data_source",
+    "validate_included_schemas",
+    "create_scope",
+    "list_scopes",
+    "load_scope",
+    "delete_scope",
     "persist_snapshot",
     "load_snapshot",
     "load_most_recent_snapshot",
