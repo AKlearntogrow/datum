@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from src.api.admin import router as admin_router
 from src.api.entities import router as entities_router
 from src.api.errors import register_exception_handlers
 from src.api.ingest import router as ingest_router
@@ -38,6 +39,7 @@ app.add_middleware(
 register_exception_handlers(app)
 
 # Route registration — one router per resource.
+app.include_router(admin_router)
 app.include_router(ingest_router)
 app.include_router(entities_router)
 
