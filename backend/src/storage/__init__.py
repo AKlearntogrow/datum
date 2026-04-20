@@ -14,6 +14,12 @@ from src.storage.entities import (
     reopen_entity_definition,
     update_entity_definition,
 )
+from src.storage.data_sources import (
+    create_data_source,
+    list_data_sources,
+    load_data_source,
+    delete_data_source,
+)
 from src.storage.snapshots import (
     persist_snapshot,
     load_snapshot,
@@ -22,6 +28,10 @@ from src.storage.snapshots import (
 )
 
 __all__ = [
+    "create_data_source",
+    "list_data_sources",
+    "load_data_source",
+    "delete_data_source",
     "persist_snapshot",
     "load_snapshot",
     "load_most_recent_snapshot",
