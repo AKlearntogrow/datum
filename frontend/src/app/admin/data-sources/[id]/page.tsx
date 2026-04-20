@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
 import { api, type DataSource, type SchemaInfo } from "@/lib/api";
 
@@ -9,12 +10,22 @@ type LoadState =
   | { kind: "loaded"; source: DataSource; schemas: SchemaInfo[] | null }
   | { kind: "error"; message: string };
 
+function maskUrl(url: string): string {
+  try {
+    const parsed = new URL(url);
+    return parsed.hostname + (parsed.port ? `:${parsed.port}` : "");
+  } catch {
+    return "•••";
+  }
+}
+
 export default function DataSourceDetailPage() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
   const id = params.id;
 
   const [state, setState] = useState<LoadState>({ kind: "loading" });
+  const [showUrl, setShowUrl] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [loadingSchemas, setLoadingSchemas] = useState(false);
@@ -45,6 +56,7 @@ export default function DataSourceDetailPage() {
         return { ...prev, schemas: result.schemas };
       });
     } catch (e) {
+      // Show empty schemas on error so the button disappears
       setState((prev) => {
         if (prev.kind !== "loaded") return prev;
         return { ...prev, schemas: [] };
@@ -55,7 +67,8 @@ export default function DataSourceDetailPage() {
   }
 
   async function handleDelete() {
-    if (!confirm("Delete this data source? This cannot be undone.")) return;
+    if (state.kind !== "loaded") return;
+    if (!confirm(`Delete data source "${state.source.name}"? This cannot be undone.`)) return;
     setDeleting(true);
     setDeleteError(null);
     try {
@@ -74,9 +87,17 @@ export default function DataSourceDetailPage() {
 
   if (state.kind === "error") {
     return (
-      <div className="text-red-400 border border-red-900 bg-red-950/50 rounded px-4 py-3">
-        <p className="font-medium mb-1">Error</p>
-        <p className="text-sm">{state.message}</p>
+      <div className="space-y-4">
+        <Link
+          href="/admin/data-sources"
+          className="text-sm text-neutral-500 hover:text-neutral-300"
+        >
+          &larr; Data Sources
+        </Link>
+        <div className="text-red-400 border border-red-900 bg-red-950/50 rounded px-4 py-3">
+          <p className="font-medium mb-1">Error</p>
+          <p className="text-sm">{state.message}</p>
+        </div>
       </div>
     );
   }
@@ -85,16 +106,39 @@ export default function DataSourceDetailPage() {
 
   return (
     <div className="space-y-8">
+      <Link
+        href="/admin/data-sources"
+        className="text-sm text-neutral-500 hover:text-neutral-300"
+      >
+        &larr; Data Sources
+      </Link>
+
       <header className="space-y-1">
         <h1 className="text-2xl font-bold">{source.name}</h1>
         <p className="text-xs font-mono text-neutral-500">{source.id}</p>
       </header>
 
-      <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm">
-        <dt className="text-neutral-500">Type</dt>
+      <div className="border border-amber-800 bg-amber-950/30 rounded-lg px-4 py-3 text-sm text-amber-300">
+        Credentials are stored unencrypted in this local database. Do not use
+        this instance for credentials you cannot afford to leak.
+      </div>
+
+      <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-3 text-sm">
+        <dt className="text-neutral-500">Name</dt>
+        <dd>{source.name}</dd>
+        <dt className="text-neutral-500">Warehouse type</dt>
         <dd>{source.warehouse_type}</dd>
         <dt className="text-neutral-500">Connection URL</dt>
-        <dd className="font-mono text-xs break-all">{source.connection_url}</dd>
+        <dd className="font-mono text-xs break-all flex items-center gap-2">
+          <span>{showUrl ? source.connection_url : maskUrl(source.connection_url)}</span>
+          <button
+            type="button"
+            onClick={() => setShowUrl((v) => !v)}
+            className="text-neutral-600 hover:text-neutral-400 text-xs shrink-0"
+          >
+            {showUrl ? "Hide" : "Show"}
+          </button>
+        </dd>
         {source.description && (
           <>
             <dt className="text-neutral-500">Description</dt>
@@ -140,6 +184,11 @@ export default function DataSourceDetailPage() {
             ))}
           </div>
         )}
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold">Scopes using this data source</h2>
+        <p className="text-sm text-neutral-500 italic">Scopes UI coming next.</p>
       </section>
 
       <section className="border-t border-neutral-800 pt-6 space-y-3">
