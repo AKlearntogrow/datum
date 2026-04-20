@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { api, type DataSource } from "@/lib/api";
-import { DataSourceCreateForm } from "@/components/DataSourceCreateForm";
+import { DataSourceCard } from "@/components/DataSourceCard";
 
 type LoadState =
   | { kind: "loading" }
@@ -32,14 +32,20 @@ export default function DataSourcesPage() {
 
   return (
     <div className="space-y-8">
-      <header className="space-y-2">
-        <h1 className="text-2xl font-bold">Data Sources</h1>
-        <p className="text-neutral-400 text-sm">
-          Warehouse connections Datum can analyze.
-        </p>
+      <header className="flex items-center justify-between">
+        <div className="space-y-1">
+          <h1 className="text-2xl font-bold">Data Sources</h1>
+          <p className="text-neutral-400 text-sm">
+            Warehouse connections Datum can analyze.
+          </p>
+        </div>
+        <Link
+          href="/admin/data-sources/new"
+          className="px-4 py-2 rounded bg-blue-700 hover:bg-blue-600 text-white font-medium text-sm"
+        >
+          + Add Data Source
+        </Link>
       </header>
-
-      <DataSourceCreateForm onCreated={load} />
 
       <section>
         {state.kind === "loading" && (
@@ -55,33 +61,18 @@ export default function DataSourcesPage() {
 
         {state.kind === "loaded" && state.sources.length === 0 && (
           <div className="text-neutral-500 text-sm border border-neutral-800 rounded px-4 py-6 text-center">
-            No data sources yet. Add one above to get started.
+            No data sources yet.{" "}
+            <Link href="/admin/data-sources/new" className="text-blue-400 hover:underline">
+              Add one
+            </Link>{" "}
+            to get started.
           </div>
         )}
 
         {state.kind === "loaded" && state.sources.length > 0 && (
           <div className="space-y-3">
             {state.sources.map((ds) => (
-              <Link
-                key={ds.id}
-                href={`/admin/data-sources/${ds.id}`}
-                className="block border border-neutral-800 rounded-lg p-4 hover:border-neutral-700 transition-colors"
-              >
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h3 className="font-semibold text-neutral-100">{ds.name}</h3>
-                    <p className="text-xs font-mono text-neutral-500 mt-1">
-                      {ds.warehouse_type} &middot; {ds.connection_url}
-                    </p>
-                    {ds.description && (
-                      <p className="text-sm text-neutral-400 mt-1">{ds.description}</p>
-                    )}
-                  </div>
-                  <span className="text-xs text-neutral-600">
-                    {new Date(ds.created_at).toLocaleDateString()}
-                  </span>
-                </div>
-              </Link>
+              <DataSourceCard key={ds.id} source={ds} onDeleted={load} />
             ))}
           </div>
         )}
