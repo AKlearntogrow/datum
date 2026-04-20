@@ -16,6 +16,7 @@ from src.storage.scopes import (
     delete_scope,
     list_scopes,
     load_scope,
+    update_scope,
     validate_included_schemas,
 )
 
@@ -139,3 +140,32 @@ class TestDeleteScope:
 
         with pytest.raises(ScopeStorageError, match=r"1 snapshot\(s\)"):
             delete_scope(db, scope.id)
+
+
+# ----------------------------------------------------------------------
+# update_scope
+# ----------------------------------------------------------------------
+
+class TestUpdateScope:
+    def test_updates_name_and_description(self, db: Session) -> None:
+        ds = create_data_source(db, name="DS", warehouse_type="postgres", connection_url="x")
+        scope = create_scope(db, data_source_id=ds.id, name="Original",
+                             included_schemas=["sales_cloud"], available_schemas=AVAILABLE,
+                             description="Old desc")
+        updated = update_scope(db, scope.id, {"name": "Renamed", "description": "New desc"})
+        assert updated.name == "Renamed"
+        assert updated.description == "New desc"
+        # included_schemas unchanged
+        assert updated.included_schemas == ["sales_cloud"]
+
+    def test_ignores_included_schemas(self, db: Session) -> None:
+        ds = create_data_source(db, name="DS", warehouse_type="postgres", connection_url="x")
+        scope = create_scope(db, data_source_id=ds.id, name="S",
+                             included_schemas=["sales_cloud"], available_schemas=AVAILABLE)
+        updated = update_scope(db, scope.id, {"included_schemas": ["hacked"], "name": "Ok"})
+        assert updated.included_schemas == ["sales_cloud"]  # not changed
+        assert updated.name == "Ok"  # name was in the allowlist
+
+    def test_raises_on_missing(self, db: Session) -> None:
+        with pytest.raises(ScopeStorageError, match="not found"):
+            update_scope(db, "nonexistent", {"name": "x"})

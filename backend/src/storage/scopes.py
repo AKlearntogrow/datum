@@ -152,3 +152,34 @@ def delete_scope(db: Session, scope_id: str) -> None:
 
     db.delete(scope)
     db.flush()
+
+
+# ----------------------------------------------------------------------
+# Update
+# ----------------------------------------------------------------------
+
+def update_scope(
+    db: Session,
+    scope_id: str,
+    fields: dict,
+) -> Scope:
+    """Revise a scope's name or description.
+
+    Deliberately does NOT allow editing included_schemas or excluded_tables —
+    those affect ingestion semantics. Delete-and-recreate is the v0 story
+    for schema selection changes (ADR 0009).
+
+    Accepts only these editable fields: name, description.
+    Other keys in fields are silently ignored.
+    """
+    scope = db.get(Scope, scope_id)
+    if scope is None:
+        raise ScopeStorageError(f"Scope {scope_id} not found")
+
+    editable = {"name", "description"}
+    for key, value in fields.items():
+        if key in editable:
+            setattr(scope, key, value)
+
+    db.flush()
+    return scope

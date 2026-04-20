@@ -25,6 +25,7 @@ from src.storage.scopes import (
     create_scope,
     list_scopes,
     load_scope,
+    update_scope,
     delete_scope,
 )
 from src.storage.snapshots import (
@@ -43,6 +44,7 @@ __all__ = [
     "create_scope",
     "list_scopes",
     "load_scope",
+    "update_scope",
     "delete_scope",
     "persist_snapshot",
     "load_snapshot",
