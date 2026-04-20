@@ -17,7 +17,25 @@ from src.connectors.exceptions import (
     PermissionDenied,
     TableNotFound,
 )
+from src.storage.data_sources import DataSourceStorageError
 from src.storage.entities import EntityStorageError
+from src.storage.scopes import ScopeStorageError
+
+
+def _storage_error_status(message: str) -> int:
+    """Map a storage error message to an HTTP status code.
+
+    Shared heuristic used by all three storage-error handlers:
+    - "not found" → 404
+    - "Cannot delete" (FK conflict) → 409 Conflict
+    - Everything else → 400
+    """
+    lower = message.lower()
+    if "not found" in lower:
+        return 404
+    if "cannot delete" in lower:
+        return 409
+    return 400
 
 
 def register_exception_handlers(app: FastAPI) -> None:
@@ -30,12 +48,17 @@ def register_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(EntityStorageError)
     async def _entity_storage_error(request: Request, exc: EntityStorageError) -> JSONResponse:
         message = str(exc)
-        # Heuristic: 'not found' phrasing maps to 404; state-transition errors to 400
-        if "not found" in message.lower():
-            status = 404
-        else:
-            status = 400
-        return JSONResponse(status_code=status, content={"error": message})
+        return JSONResponse(status_code=_storage_error_status(message), content={"error": message})
+
+    @app.exception_handler(DataSourceStorageError)
+    async def _data_source_storage_error(request: Request, exc: DataSourceStorageError) -> JSONResponse:
+        message = str(exc)
+        return JSONResponse(status_code=_storage_error_status(message), content={"error": message})
+
+    @app.exception_handler(ScopeStorageError)
+    async def _scope_storage_error(request: Request, exc: ScopeStorageError) -> JSONResponse:
+        message = str(exc)
+        return JSONResponse(status_code=_storage_error_status(message), content={"error": message})
 
     @app.exception_handler(ConnectionFailed)
     async def _connection_failed(request: Request, exc: ConnectionFailed) -> JSONResponse:
