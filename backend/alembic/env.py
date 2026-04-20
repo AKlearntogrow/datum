@@ -18,7 +18,7 @@ from src.models.base import Base
 
 # Make all models discoverable for autogenerate. The imports themselves are
 # what register the tables with Base.metadata. Do not remove unused imports.
-from src.models import snapshots, entities  # noqa: F401
+from src.models import snapshots, entities, sources  # noqa: F401
 
 config = context.config
 
