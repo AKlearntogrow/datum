@@ -31,7 +31,14 @@ class SchemaSnapshot(Base):
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
     captured_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     source_database: Mapped[str] = mapped_column(String(255), nullable=False)
+    scope_id: Mapped[str] = mapped_column(
+        String(36),
+        ForeignKey("scopes.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
 
+    scope: Mapped["Scope"] = relationship()
     tables: Mapped[list["SnapshotTable"]] = relationship(
         back_populates="snapshot",
         cascade="all, delete-orphan",

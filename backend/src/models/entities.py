@@ -76,6 +76,14 @@ class EntityDefinition(Base):
         nullable=False,
         index=True,
     )
+    scope_id: Mapped[str] = mapped_column(
+        String(36),
+        ForeignKey("scopes.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+
+    scope: Mapped["Scope"] = relationship()
 
     source_columns: Mapped[list["EntitySourceColumn"]] = relationship(
         back_populates="entity",
