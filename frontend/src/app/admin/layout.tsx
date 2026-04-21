@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 const NAV_ITEMS = [
   { href: "/admin", label: "Admin Home" },
   { href: "/admin/data-sources", label: "Data Sources" },
+  { href: "/admin/scopes", label: "Scopes" },
 ];
 
 export default function AdminLayout({

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from src.models.sources import Scope
 
@@ -19,7 +19,9 @@ class ScopeCreateRequest(BaseModel):
     data_source_id: str
     name: str
     included_schemas: list[str]
-    excluded_tables: list[str] | None = None
+    excluded_tables: list[str] | None = Field(
+        default=None, description='Qualified table names in the form "schema.table"'
+    )
     description: str | None = None
 
 

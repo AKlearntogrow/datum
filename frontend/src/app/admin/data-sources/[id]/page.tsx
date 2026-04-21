@@ -3,11 +3,11 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
-import { api, type DataSource, type SchemaInfo } from "@/lib/api";
+import { api, type DataSource, type SchemaInfo, type Scope } from "@/lib/api";
 
 type LoadState =
   | { kind: "loading" }
-  | { kind: "loaded"; source: DataSource; schemas: SchemaInfo[] | null }
+  | { kind: "loaded"; source: DataSource; schemas: SchemaInfo[] | null; scopes: Scope[] }
   | { kind: "error"; message: string };
 
 function maskUrl(url: string): string {
@@ -33,8 +33,11 @@ export default function DataSourceDetailPage() {
   const load = useCallback(async () => {
     setState({ kind: "loading" });
     try {
-      const source = await api.getDataSource(id);
-      setState({ kind: "loaded", source, schemas: null });
+      const [source, scopeList] = await Promise.all([
+        api.getDataSource(id),
+        api.listScopes(id),
+      ]);
+      setState({ kind: "loaded", source, schemas: null, scopes: scopeList.items });
     } catch (e) {
       setState({
         kind: "error",
@@ -187,8 +190,34 @@ export default function DataSourceDetailPage() {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold">Scopes using this data source</h2>
-        <p className="text-sm text-neutral-500 italic">Scopes UI coming next.</p>
+        <h2 className="text-lg font-semibold">Scopes</h2>
+        {source && state.kind === "loaded" && state.scopes.length === 0 && (
+          <p className="text-sm text-neutral-500">
+            No scopes yet.{" "}
+            <Link
+              href={`/admin/scopes/new?data_source_id=${id}`}
+              className="text-blue-400 hover:underline"
+            >
+              Create one
+            </Link>
+          </p>
+        )}
+        {source && state.kind === "loaded" && state.scopes.length > 0 && (
+          <div className="space-y-2">
+            {state.scopes.map((scope) => (
+              <Link
+                key={scope.id}
+                href={`/admin/scopes/${scope.id}`}
+                className="block border border-neutral-800 rounded px-4 py-3 hover:border-neutral-700 transition-colors"
+              >
+                <span className="font-semibold text-neutral-200 text-sm">{scope.name}</span>
+                <span className="text-xs text-neutral-500 ml-3">
+                  {scope.included_schemas.join(", ")}
+                </span>
+              </Link>
+            ))}
+          </div>
+        )}
       </section>
 
       <section className="border-t border-neutral-800 pt-6 space-y-3">
